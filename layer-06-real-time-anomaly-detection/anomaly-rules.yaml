@@ -1,0 +1,31 @@
+# AVIK Sandbox Shield - Layer 6 Anomaly Rules
+# ---------------------------------------------
+# Configuration defining acceptable system baselines and threat scoring math.
+
+network:
+  listen_ip: "127.0.0.1"
+  guardian_port: 9006       # Receiving alerts from Layer 5
+  telemetry_port: 9007      # Receiving metrics from Host OS
+  layer8_ip: "127.0.0.1"    # IP of the Kill Switch controller
+  layer8_port: 9008         # Port of the Kill Switch controller
+
+thresholds:
+  # The total accumulated threat score required to trigger Layer 8
+  critical_action_threshold: 1.0 
+  
+  # How fast the threat score cools down per second (Forgives minor blips)
+  threat_decay_per_second: 0.05
+  
+  # Multiplier applied to alerts originating from Layer 5 Guardians
+  guardian_weight: 1.0
+
+system_baselines:
+  # CPU anomalies indicate cryptojacking or runaway loops
+  max_cpu_utilization_percent: 95.0
+  
+  # Sudden massive memory allocations indicate buffer overflows/heap spraying
+  max_memory_velocity_mb_s: 500.0
+  
+  # Allowed syscalls are usually defined at the eBPF layer. 
+  # This configures the engine's reaction to violations.
+  unauthorized_syscall_weight: 1.0 

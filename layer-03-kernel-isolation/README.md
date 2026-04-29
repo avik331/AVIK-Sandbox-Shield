@@ -1,25 +1,57 @@
-# Layer 3: Kernel Isolation
+<div align="center">
+  <h1>🛡️ AVIK Shield Layer 3: Kernel Isolation</h1>
+  <p><b>Hardware-accelerated containment to neutralize zero-day kernel exploits.</b></p>
+</div>
 
-## 🛡️ Purpose of the Layer
-Layer 3 establishes a secure software boundary between the AI application and the host operating system. Standard containers (like Docker) share the host's Linux kernel, meaning a single kernel vulnerability compromises the entire host. Kernel Isolation solves this by wrapping the AI workload inside a hardware-accelerated microVM. Each AI instance gets its own dedicated, ephemeral kernel.
+---
 
-## ⚠️ Specific Threats Defeated
-- **Host Kernel Exploits:** Zero-day vulnerabilities in Linux subsystems (eBPF, VFS, networking stack) are contained within the microVM's guest kernel, leaving the host operating system untouched.
-- **Container Escapes:** Techniques that exploit cgroups, user namespaces, or shared mounts (e.g., runC vulnerabilities) fail because there is no shared kernel to escape into.
-- **Resource Exhaustion (Noisy Neighbor):** Strict hardware-level partitioning of CPU, memory, and IO prevents the AI from freezing the host system by consuming all available resources.
+## 📖 Overview
 
-## ⚙️ Recommended Real-World Technologies
-- **AWS Firecracker:** A lightweight, secure microVM hypervisor written in Rust, designed for secure serverless execution with minimal overhead (< 5ms boot time).
-- **Kata Containers:** An OCI-compliant runtime that builds lightweight VMs that feel and perform like containers but offer the workload isolation of hardware virtualization.
-- **gVisor:** Google's application kernel that intercepts and implements syscalls in userspace, providing strong isolation without full hardware virtualization.
-- **Custom Stripped Kernels:** Compiling a Linux guest kernel with all unnecessary drivers and features disabled to drastically shrink the attack surface.
+Standard containerization platforms (like Docker or Kubernetes) provide namespace isolation, but all containers share the exact same underlying Linux kernel. If an advanced AI discovers or is prompted with a zero-day kernel exploit (e.g., an eBPF or VFS vulnerability), it can easily escape a standard container and gain root access to the host.
 
-## ☑️ Implementation Checklist
-- [ ] Replace standard Docker runtimes with Kata Containers or run Firecracker directly.
-- [ ] Compile a minimal guest Linux kernel tailored exactly to the needs of the AI inference engine.
-- [ ] Configure `seccomp-bpf` filters on the hypervisor process running on the host to restrict its own capabilities.
-- [ ] Ensure all persistent storage attached to the microVM is ephemeral and destroyed upon workload termination.
-- [ ] Disable all microVM network interfaces except a single virtual tap interface for prompt ingress/egress.
+**Layer 3 solves this by providing hardware-level virtualization with minimal overhead.** 
 
-## 🔒 Security Guarantees Provided
-This layer provides **Hardware-Enforced Memory and Execution Partitioning**. It shifts the trust boundary from the massive, complex Linux kernel to the much smaller, tightly audited hypervisor footprint.
+Using **AWS Firecracker** (or Kata Containers), AVIK Shield creates an ephemeral microVM for the core LLM. The AI runs on its own isolated guest kernel. Even if the AI totally compromises its local kernel, it is still trapped inside the hardware virtualization boundary managed by KVM on the host.
+
+## ⚠️ Threats Defeated
+
+- **Container Breakouts:** Neutered because `runC`, cgroups, and namespaces are replaced by strict hardware virtualization.
+- **Host Kernel Exploitation:** An AI attempting privilege escalation via dirty pipes, eBPF exploits, or syscall manipulation will only compromise its ephemeral guest kernel, leaving the host untouched.
+- **Resource Exhaustion (Denial of Service):** Strict hardware-enforced CPU and memory limits prevent the AI from starving the host system.
+- **Noisy Neighbor Side-Channels:** Hardware partitioning drastically reduces the efficacy of cache-timing and memory bus side-channel attacks compared to shared-kernel models.
+
+## 🛠️ Module Components
+
+1. **`firecracker-setup.sh`**: OS script to install Firecracker, configure KVM permissions, and set up the `tap0` virtual interface.
+2. **`vm-config.json`**: The canonical secure configuration template for the microVM.
+3. **`kernel-isolation.py`**: The official Python API for orchestrating the microVM. It securely interacts with the Firecracker REST API over a local unix socket.
+4. **`run-isolated-llm.sh`**: A wrapper script to launch the contained environment.
+5. **`test-isolation.py`**: A verification script designed to run *inside* the microVM to mathematically prove the isolation boundary holds.
+6. **[Connection Interface Specification](connection-interface.md)**: Details the exact network topology connecting the microVM to the host.
+
+## 🚀 Quick Start
+
+1. **Install Firecracker:**
+   ```bash
+   sudo ./firecracker-setup.sh
+   ```
+
+2. **Launch the Isolated Environment:**
+   ```bash
+   ./run-isolated-llm.sh
+   ```
+
+3. **Verify the Isolation Boundary:**
+   ```bash
+   # Connect to the microVM console and run:
+   python3 test-isolation.py
+   ```
+
+## 🔌 Connection Interface
+
+The Layer 3 microVM has absolutely no direct access to the host's physical network cards. It connects to the host via a single, tightly controlled virtual TAP interface (`tap0`). 
+
+- **Egress to Layer 2:** The host routes specific telemetry packets from `tap0` to `diode0` for outward transmission.
+- **Ingress from Layer 4:** The Prompt Enforcer sends strictly validated JSON payloads over `tap0` to the LLM.
+
+Please refer to the [Connection Interface Document](connection-interface.md) for precise network and bridging configurations.

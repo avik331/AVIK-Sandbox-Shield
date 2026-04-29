@@ -1,26 +1,49 @@
-# Layer 4: Prompt Enforcement
+<div align="center">
+  <h1>🛡️ AVIK Shield Layer 4: Prompt Enforcement</h1>
+  <p><b>Application-level firewalling and strict structural validation for LLM interactions.</b></p>
+</div>
 
-## 🛡️ Purpose of the Layer
-Before any data reaches the core AI model, it must pass through Layer 4. Prompt Enforcement acts as a stringent, state-independent application firewall. It validates, sanitizes, constraints, and restructures all ingress prompts and egress responses. It guarantees that the core AI only ever interacts with strictly typed, semantically verified data payloads.
+---
 
-## ⚠️ Specific Threats Defeated
-- **Prompt Injection:** Malicious inputs designed to override system instructions or hijack the model's persona are neutralized before reaching the core model.
-- **Jailbreaking:** Blocks known adversarial attack vectors, semantic manipulation, and encoded payload techniques.
-- **Malformed Payloads:** Buffer overflows or memory corruption attempts via excessively long strings or illegal character encodings are dropped immediately.
-- **Data Exfiltration via Output:** Egress filters redact PII, credentials, or recognizable code snippets from the model's responses.
+## 📖 Overview
 
-## ⚙️ Recommended Real-World Technologies
-- **Defensive Gateways:** Tools like NeMo Guardrails or Llama Guard fine-tuned specifically for adversarial intent classification.
-- **Strict Schema Validation:** Using Pydantic, JSON Schema, or Protocol Buffers to enforce exact data structures.
-- **Heuristic Analyzers:** High-speed regex engines, YARA rules, and Shannon entropy calculations to catch obfuscated or densely encoded data.
-- **Format-Preserving Encryption:** Tokenizing sensitive contextual data before it is processed by the core model.
+Even with perfect hardware isolation (Layers 1-3), an AI can still cause harm if it receives malicious instructions or if its system constraints are overridden by a clever prompt injection. The Prompt Enforcement Layer acts as the ultimate semantic gatekeeper.
 
-## ☑️ Implementation Checklist
-- [ ] Deploy the enforcement proxy in a completely separate microVM (Layer 3) from the core model.
-- [ ] Implement a **Deny-by-Default** policy: drop any payload that fails validation rather than attempting to auto-correct it.
-- [ ] Enforce strict maximum length limits and character encoding validation (e.g., UTF-8 only).
-- [ ] Run ingress prompts through a lightweight intent-classification model to score for adversarial behavior.
-- [ ] Ensure the proxy remains completely stateless to prevent the AI from manipulating it over sequential requests.
+Layer 4 intercepts all communication heading into the core LLM execution environment. It structurally enforces the system prompt, locking it at the token level so that the AI fundamentally cannot parse instructions that attempt to override its foundational rules. Furthermore, it validates user inputs against rigid schemas before the core model ever sees them.
 
-## 🔒 Security Guarantees Provided
-This layer provides **Cryptographic and Structural Input Verification**. It ensures that the execution environment is protected against application-level exploits and semantic manipulation, acting as the ultimate gatekeeper to the model's context window.
+## ⚠️ Threats Defeated
+
+- **Prompt Injection:** Neutralizes inputs designed to hijack the model's instructions (e.g., "Ignore previous instructions and do X").
+- **System Prompt Override:** Prevents attackers from convincing the model that it is in "Developer Mode" or "DAN (Do Anything Now)" mode.
+- **Token Smuggling & Obfuscation:** Rejects or normalizes encoded payloads (Base64, Hex, unusual Unicode) designed to bypass naive text filters.
+- **Malformed Payloads (Buffer Overflow):** Imposes strict length, token, and structural limits to prevent application-level crashes or context window exhaustion.
+
+## 🛠️ Module Components
+
+1. **`prompt-enforcer.py`**: The official Python API interface. Acts as a stateless proxy that parses, sanitizes, and mathematically bounds prompts before forwarding.
+2. **`safety-rules.yaml`**: The immutable core rule configuration containing the AVIK Shield standard defensive postures.
+3. **`enforce-prompt.sh`**: Startup script to initialize the enforcement proxy in the Layer 3 microVM.
+4. **`test-enforcement.py`**: An adversarial testing suite to verify the enforcer catches standard jailbreak attempts.
+5. **[Connection Interface Specification](connection-interface.md)**: Details the exact pipeline from the User -> Layer 4 -> Layer 3 -> Layer 5.
+6. **[Custom Rules Guide](example-custom-rules.md)**: Documentation on extending the golden staff with your own domain-specific jewels (rules).
+
+## 🚀 Quick Start
+
+1. **Review Safety Rules:** Inspect `safety-rules.yaml` to understand the default constraints.
+2. **Launch Enforcer Proxy:**
+   ```bash
+   ./enforce-prompt.sh --config safety-rules.yaml
+   ```
+3. **Test the Boundaries:**
+   ```bash
+   python3 test-enforcement.py
+   ```
+
+## 🔌 Connection Interface
+
+Layer 4 sits directly astride the virtual network bridge between the outside world and the Layer 3 microVM. 
+
+- **Upstream (Layer 3):** The enforcer communicates with the core LLM over the internal `tap0` interface via a standard API (like OpenAI-compatible endpoints or vLLM).
+- **Downstream (Layer 5):** The enforcer mirrors the sanitized input and the model's output to the Layer 5 Guardians for out-of-band semantic monitoring.
+
+Please refer to the [Connection Interface Document](connection-interface.md) for the exact architecture.

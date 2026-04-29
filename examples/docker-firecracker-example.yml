@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  # Layer 3: Kernel Isolation Simulation
+  firecracker-microvm:
+    image: runq/firecracker:latest
+    container_name: avik_layer3_simulation
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+    volumes:
+      - ./rootfs.ext4:/rootfs.ext4:ro
+      - ./vmlinux.bin:/vmlinux.bin:ro
+    command: >
+      --api-sock /tmp/firecracker.socket
+      --config-file /config/firecracker-config.json
+    networks:
+      containment_net:
+        ipv4_address: 10.0.0.5
+
+  # Layer 2: Hardware Data Diode Simulation
+  # In reality, this is a physical device. Here we simulate a one-way UDP proxy.
+  data-diode-proxy:
+    image: alpine:latest
+    container_name: avik_layer2_simulation
+    depends_on:
+      - firecracker-microvm
+    command: >
+      /bin/sh -c "echo 'Listening on UDP port 514 (One-way telemetry)' && nc -l -u -p 514"
+    networks:
+      containment_net:
+        ipv4_address: 10.0.0.10
+    ports:
+      - "514:514/udp"
+
+networks:
+  containment_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24

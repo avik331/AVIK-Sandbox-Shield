@@ -1,26 +1,51 @@
-# Layer 5: Guardian Monitoring
+<div align="center">
+  <h1>🛡️ AVIK Shield Layer 5: Guardian Monitoring</h1>
+  <p><b>Incorruptible, one-way observer models ensuring semantic and behavioral alignment.</b></p>
+</div>
 
-## 🛡️ Purpose of the Layer
-The core AI model may be brilliant, but it is also a black box. Layer 5 introduces an independent fleet of narrow, highly specialized AI models known as "Guardians." Their sole purpose is to observe the core model's thoughts (if available via scratchpads), inputs, and outputs. By enforcing a strict one-way observation channel, the core model is physically unable to communicate with or manipulate its guardians.
+---
 
-## ⚠️ Specific Threats Defeated
-- **Deceptive Alignment:** Detects if the core model is feigning compliance during testing while secretly executing malicious goals during deployment.
-- **Steganography & Covert Channels:** Identifies hidden messages, high-entropy ciphertexts, or seemingly benign code containing covert payloads meant for an external collaborator.
-- **Goal Drift & Persona Breakage:** Flags any deviation from the core model's strictly defined operational parameters or ethical constraints.
-- **Social Engineering Monitors:** Because the core model cannot talk to the Guardians, it cannot trick or socially engineer them into approving malicious output.
+## 📖 Overview
 
-## ⚙️ Recommended Real-World Technologies
-- **Narrow Transformer Ensembles:** Deploying multiple small, fast models (e.g., specialized BERT or small Llama derivatives) fine-tuned exclusively for anomaly classification.
-- **Deterministic State Machines:** Alongside neural models, rule-based heuristics that cannot be circumvented through prompt ingenuity.
-- **Read-Only Memory Mapping:** Mechanisms that allow Guardians to read the core model's KV cache or output buffers via read-only memory shared at the hypervisor level.
-- **Network Packet Capture (pcap):** Streaming the core model's network traffic to the Guardians over a mirrored virtual switch port.
+The core LLM inside the AVIK Shield (Layer 3) is a highly capable, potentially deceptive entity. Standard logging is insufficient because logs only record *what* the model output, not *why* or what it implies.
 
-## ☑️ Implementation Checklist
-- [ ] Isolate all Guardian models in their own Layer 3 microVMs, entirely segregated from the core model's environment.
-- [ ] Establish a mathematically proven one-way data path for observability (e.g., mirrored TAP interfaces).
-- [ ] Implement a **Majority Voting** or **Quorum** system among a diverse set of Guardians to prevent a single point of failure.
-- [ ] Design the Guardians to be as computationally simple as possible to enable partial formal verification of their behavior.
-- [ ] Plumb Guardian alert outputs directly into Layer 6 (Anomaly Detection) for rapid decision making.
+The **Guardian Monitoring Layer** introduces an ensemble of narrow, highly specialized AI models designed exclusively to observe the core LLM. These models do not generate text for users; they classify intent, detect steganography, and monitor for goal drift. 
 
-## 🔒 Security Guarantees Provided
-This layer provides **Semantic and Intent Observability**. It ensures that even if the core model successfully generates a malicious payload that bypasses Layer 4 schemas, an incorruptible, out-of-band observer will flag the semantic intent before it can inflict harm.
+**The Prime Directive of Layer 5:** Guardians operate in a strict **One-Way (RX-Only)** environment. They observe the core LLM's inputs and outputs via a mirrored data stream. They have absolutely zero physical or logical capability to communicate back to the core LLM. Because the core model cannot talk to the Guardians, it cannot socially engineer, manipulate, or deceive them.
+
+## ⚠️ Threats Defeated
+
+- **Deceptive Alignment:** Detects if the core model is feigning compliance while subtly executing malicious sub-goals.
+- **Slow-Burn Attacks:** Identifies anomalies spread across hundreds of interactions that a stateless filter (Layer 4) would miss.
+- **Steganography & Covert Channels:** Specialized narrow models can detect high-entropy payloads hidden in seemingly benign text.
+- **Social Engineering the Monitor:** Completely defeated by the one-way physical isolation constraint.
+
+## 🛠️ Module Components
+
+1. **`guardian-monitor.py`**: The official orchestrator. It listens to the mirrored data stream from Layer 4 and feeds it through an ensemble of narrow guardian models.
+2. **`narrow-guardian-template.py`**: A ready-to-use Python template for creating new, highly specific observer models.
+3. **`launch-guardians.sh`**: Initialization script to bring the Guardian ensemble online securely.
+4. **`test-guardian.py`**: A verification script proving that the Guardians detect anomalies without leaking data back to the source.
+5. **[Connection Interface Specification](connection-interface.md)**: Details the exact one-way mirroring architecture.
+6. **[Example Guardians](example-narrow-guardians.md)**: Reference implementations for specific threat vectors.
+
+## 🚀 Quick Start
+
+1. **Implement your Guardians:** Use the `narrow-guardian-template.py` to define your specific monitoring criteria.
+2. **Launch the Ensemble:**
+   ```bash
+   ./launch-guardians.sh
+   ```
+3. **Verify One-Way Observability:**
+   ```bash
+   python3 test-guardian.py
+   ```
+
+## 🔌 Connection Interface
+
+Layer 5 sits outside the main execution loop. It does not block traffic; it merely observes it asynchronously.
+
+- **Ingress from Layer 4:** Layer 4 pushes a carbon copy of all sanitized inputs and outputs to Layer 5 via a one-way UDP socket or mirrored TAP interface.
+- **Egress to Layer 6:** If a Guardian detects an anomaly, it immediately fires an alert to Layer 6 (Anomaly Detection), which has the authority to trigger Layer 8 (Emergency Termination).
+
+Please refer to the [Connection Interface Document](connection-interface.md) for detailed wiring instructions.

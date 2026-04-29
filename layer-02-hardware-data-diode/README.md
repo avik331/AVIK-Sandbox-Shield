@@ -1,24 +1,49 @@
-# Layer 2: Hardware Data Diode
+<div align="center">
+  <h1>🛡️ AVIK Shield Layer 2: Hardware Data Diode</h1>
+  <p><b>The physical guarantor of one-way telemetry and audit logging.</b></p>
+</div>
 
-## 🛡️ Purpose of the Layer
-While an air-gap (Layer 1) provides perfect security, a complete vacuum makes monitoring impossible. The Hardware Data Diode solves this by allowing telemetry and audit logs to exit the secure enclave to the outside world, while mathematically guaranteeing that absolutely no data can travel back in. It forces a unidirectional physical path using optical physics.
+---
 
-## ⚠️ Specific Threats Defeated
-- **Bi-directional Exploitation:** Prevents attackers or the contained AI from establishing a two-way handshake (like TCP), which is strictly required for interactive shells and reverse C2 channels.
-- **Ingress Malware:** Eliminates the risk of an external attacker injecting malware into the secure enclave through the monitoring port.
-- **Protocol Manipulation:** Software firewalls can be misconfigured or bypassed via packet fragmentation. A physical diode ignores protocols entirely—it only understands the physical transmission of light.
+## 📖 Overview
 
-## ⚙️ Recommended Real-World Technologies
-- **Commercial Optical Data Diodes:** Enterprise-grade appliances from vendors like Owl Cyber Defense, BAE Systems, or Fox-IT.
-- **Fiber Optic Simplex Cables:** A standard fiber optic setup where the TX (transmit) strand on the external receiving server is physically cut or removed, making it impossible for the receiver to emit light back.
-- **Forward Error Correction (FEC) Proxies:** Because the physical layer is one-way (UDP-like), software proxies using Reed-Solomon or similar algorithms must be deployed on both sides to reconstruct dropped packets without requesting retransmissions.
+The Hardware Data Diode Layer is the crucial link that solves the primary dilemma of air-gapped systems: *How do we monitor a perfectly isolated system without breaking its isolation?*
 
-## ☑️ Implementation Checklist
-- [ ] Install a physical optical data diode at the exact boundary of the Layer 1 Air-Gap.
-- [ ] Verify visually and via hardware spec that the receiving side has no optical emitter (LED/Laser).
-- [ ] Deploy a UDP/FEC proxy on the internal sending node.
-- [ ] Deploy the corresponding UDP/FEC decoding proxy on the external receiving node.
-- [ ] Route all system logs (Layer 6) and audit trails (Layer 7) exclusively through this diode.
+Layer 2 enforces **physical unidirectionality**. Unlike software firewalls which can be bypassed via misconfigurations or zero-day exploits, a physical data diode relies on the laws of physics—specifically optics—to ensure data can only travel in one direction. In the AVIK framework, this allows continuous egress of critical logs and metrics from the containment zone (Layer 1) to the external world, without opening any pathway for attackers to send data back in.
 
-## 🔒 Security Guarantees Provided
-This layer provides **Physical Unidirectionality**. Even if the external monitoring server is completely compromised by an attacker, the laws of physics prevent them from sending a single bit of information back into the containment zone.
+## ⚠️ Threats Defeated
+
+- **Bi-directional Communication (C2):** An attacker cannot establish a two-way handshake (e.g., TCP), rendering reverse shells and interactive command channels physically impossible.
+- **Reverse Data Flow:** Prevents the external monitoring network from accidentally or maliciously injecting data, commands, or malware into the containment zone.
+- **Protocol Exploitation:** Hardware diodes do not run complex network stacks on the transmission line. They strip away TCP/IP complexity, mitigating packet-crafting attacks.
+- **Network Exfiltration (Ingress):** Completely blocks any inbound traffic that an escaped model might attempt to pull from external servers.
+
+## 🛠️ Module Components
+
+1. **`setup-diode.sh`**: OS-level hardening script that configures the host network stack for diode compatibility (static ARP, UDP optimization, and strict outbound-only routing).
+2. **`diode-interface.py`**: The official Python API for Layer 2. Enforces unidirectional transmission constraints and handles Forward Error Correction (FEC) required for reliable diode transfers.
+3. **`simulation-mode.py`**: A local simulator that mimics hardware diode constraints (including random packet loss) for development and testing without physical hardware.
+4. **[Connection Interface Specification](connection-interface.md)**: Defines the boundaries between Layer 1, Layer 2, and the external audit servers.
+5. **[Real Hardware Setup](example-real-hardware.md)**: Walkthroughs for implementing commercial diodes like OPSWAT or Owl Cyber Defense.
+
+## 🚀 Quick Start (Simulation Mode)
+
+If you do not yet have physical hardware, you can test the software mechanics using the simulator:
+
+1. **Start the Receiver (External World):**
+   ```bash
+   python3 simulation-mode.py --mode receive
+   ```
+2. **Send Data (From Containment Zone):**
+   ```bash
+   python3 simulation-mode.py --mode send --payload "Critical Anomaly Detected"
+   ```
+
+## 🔌 Connection Interface
+
+Layer 2 is uniquely positioned at the boundary of the air-gap. 
+
+- **Input:** Receives UDP datagrams from the `diode0` interface of the Layer 1 environment.
+- **Output:** Emits physical signals (typically photons over fiber) to the external receiver, which then forwards the data to Layer 7 (Immutable Audit).
+
+For precise technical specifications, see the [Connection Interface Document](connection-interface.md).
