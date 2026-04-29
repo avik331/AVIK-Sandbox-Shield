@@ -7,79 +7,67 @@
    ██║  ██║ ╚████╔╝ ██║██║  ██╗    ███████║██║  ██║██║███████╗███████╗██████╔╝
    ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝ 
   </pre>
-  <h3>The Advanced Verified Isolation Kernel</h3>
-  <p><b>A production-grade, 8-layer defense-in-depth reference architecture for safely containing frontier-level AI models.</b></p>
+  <h3>Advanced Verified Isolation Kernel</h3>
+  <p><b>An 8-layer, defense-in-depth containment framework for frontier AI systems.</b></p>
 
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-  [![Defense Layers: 8](https://img.shields.io/badge/Defense_Layers-8_Mandatory-red.svg)](#the-avik-golden-staff--8-layers-complete)
-  [![Status: Production Ready](https://img.shields.io/badge/Status-Production_Ready-green.svg)](#)
-  [![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-blueviolet.svg)](#)
-  <br>
-  [![GitHub stars](https://img.shields.io/github/stars/avik3/AVIK-Sandbox-Shield?style=social)](https://github.com/avik3/AVIK-Sandbox-Shield/stargazers)
-  [![GitHub forks](https://img.shields.io/github/forks/avik3/AVIK-Sandbox-Shield?style=social)](https://github.com/avik3/AVIK-Sandbox-Shield/network/members)
+  [![Defense Layers: 8](https://img.shields.io/badge/Defense_Layers-8-red.svg)](#the-8-layers)
+  [![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-blueviolet.svg)](#)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 </div>
 
 ---
 
-## 📖 Overview
+## Overview
 
-This framework is specifically designed for organizations, defense teams, intelligence agencies, research labs, and enterprises that need to safely test unknown or untrusted LLMs, or use powerful LLMs as the central orchestrator (the 'brain') for critical operations and data crunching.
+**AVIK Sandbox Shield** is a reference architecture for organizations that need to run powerful LLMs inside a controlled, auditable, and physically bounded execution environment — whether for safety research, red-teaming unknown models, or using an LLM as an orchestrator in critical workflows.
 
-**AVIK Sandbox Shield** is a mathematically grounded, hardware-backed framework engineered to provide the absolute strongest containment guarantees for advanced AI systems. Current industry sandbox solutions rely primarily on fragile software boundaries—such as container namespaces, syscall filtering, or naive prompt engineering. These perimeter defenses are hopelessly inadequate against an Artificial General Intelligence (AGI) or a highly deceptive model capable of generating novel zero-day exploits, discovering side-channel exfiltration routes, and performing complex psychological manipulation on human operators.
+Typical container or prompt-engineering sandboxes provide a single defensive perimeter. AVIK Shield provides eight independent, asymmetric layers spanning physical hardware, hypervisor isolation, application logic, and cryptographic audit. A breach at any one layer cannot propagate through the remaining layers by design.
 
-AVIK Shield neutralizes these threats by introducing a **mandatory 8-layer defense-in-depth architecture**. This architecture spans physical reality, electronic hardware constraints, hypervisor-level virtualization, and semantic application logic. By enforcing draconian, fail-deadly isolation at every layer of the computing stack, we guarantee that a catastrophic breach at any single layer cannot physically or logically compromise the system's overall containment. 
-
----
-
-## 🎉 v1.0 "Golden Staff" Release
-
-The v1.0 release establishes the "Golden Staff"—the complete, unbreakable foundation of the AVIK Shield framework. It is ready for deployment in high-security environments, including defense contractors, national security laboratories, and frontier AI research facilities. Users are encouraged to adopt this staff and add their own "jewels" (domain-specific safety rules, custom Guardian models, and physical hardware).
-
-For detailed release notes, please see [RELEASE.md](RELEASE.md).
+**Intended users:** AI safety teams, defense contractors, intelligence agencies, enterprise security teams, and research labs operating or evaluating frontier models.
 
 ---
 
-## 🏆 The 8 Layers of Containment
+## The 8 Layers
 
-| Layer | Component | Defense Mechanism | Primary Threats Mitigated |
+| Layer | Component | Primary Defense | Threats Mitigated |
 | :---: | :--- | :--- | :--- |
-| **8** | [Emergency Termination](layer-08-emergency-termination) | Hardware relay / SysRq Kill Switch | Complete sandbox breach; Zero-days |
-| **7** | [Immutable Audit](layer-07-immutable-audit) | Merkle Tree append-only ledger | Log tampering; Cover-up attempts |
-| **6** | [Real-Time Anomaly](layer-06-real-time-anomaly-detection) | eBPF telemetry & threshold math | Resource side-channels; Escape prep |
-| **5** | [Guardian Monitoring](layer-05-guardian-monitoring) | One-way narrow observer models | Deceptive alignment; Steganography |
-| **4** | [Prompt Enforcement](layer-04-prompt-enforcement) | Structural locking & strict schema | Prompt injection; Jailbreaks |
-| **3** | [Kernel Isolation](layer-03-kernel-isolation) | KVM / Firecracker microVMs | Container breakouts; Host kernel exploits |
-| **2** | [Hardware Data Diode](layer-02-hardware-data-diode) | Optical/Physical UDP unidirectionality | Reverse shells; Network C2 channels |
-| **1** | [Physical Air-Gap](layer-01-physical-air-gap) | Wireless removal & strict host config | Remote network exploitation |
+| **8** | [Emergency Termination](layer-08-emergency-termination) | Hardware relay / SysRq kill switch | Full sandbox breach; zero-days |
+| **7** | [Immutable Audit](layer-07-immutable-audit) | Merkle tree append-only ledger | Log tampering; forensic cover-up |
+| **6** | [Real-Time Anomaly Detection](layer-06-real-time-anomaly-detection) | eBPF telemetry + threshold scoring | Resource side-channels; escape prep |
+| **5** | [Guardian Monitoring](layer-05-guardian-monitoring) | Narrow observer model ensemble | Deceptive alignment; steganography |
+| **4** | [Prompt Enforcement](layer-04-prompt-enforcement) | Structural locking + schema validation | Prompt injection; jailbreaks |
+| **3** | [Kernel Isolation](layer-03-kernel-isolation) | KVM / Firecracker microVMs | Container breakouts; host kernel exploits |
+| **2** | [Hardware Data Diode](layer-02-hardware-data-diode) | Optical unidirectionality | Reverse shells; network C2 channels |
+| **1** | [Physical Air-Gap](layer-01-physical-air-gap) | Wireless removal + host hardening | Remote network exploitation |
 
 ---
 
-## 🏛️ Architecture Flow
+## Architecture
 
 ```mermaid
 graph TD
     User([External Operator]) -->|Prompt| L4
 
-    subgraph "AVIK Shield: Containment Zone"
-        L4[Layer 4: Prompt Enforcer] -->|Structurally Locked Input| L3
+    subgraph "Containment Zone"
+        L4[Layer 4: Prompt Enforcer] -->|Locked Input| L3
         L3{Layer 3: Firecracker microVM} -->|Raw Output| L4
     end
 
-    subgraph "AVIK Shield: Out-of-Band Observation"
+    subgraph "Out-of-Band Observation"
         L4 -.->|Mirrored UDP - RX Only| L5
-        L5[Layer 5: Guardian Ensemble] -.->|Asynchronous Alert| L6
-        HostTelemetry[Host OS Telemetry] -.->|eBPF Data| L6
-        L6[Layer 6: Anomaly Detector] 
+        L5[Layer 5: Guardian Ensemble] -.->|Alert| L6
+        HostTelemetry[Host Telemetry] -.->|eBPF| L6
+        L6[Layer 6: Anomaly Detector]
     end
 
-    subgraph "AVIK Shield: Absolute Hardware Boundaries"
-        L6 ==>|Hardware GPIO Trigger| L8((Layer 8: Kill Switch))
+    subgraph "Hardware Boundaries"
+        L6 ==>|GPIO Trigger| L8((Layer 8: Kill Switch))
         L8 -.->|Cuts Power| L3
         L3 -.->|Syslog/Metrics| L2>Layer 2: Data Diode]
         L6 -.->|Forensic Data| L2
     end
-    
+
     subgraph "External Audit Server"
         L2 -->|Photons - One Way| L7[(Layer 7: Immutable Ledger)]
     end
@@ -90,46 +78,169 @@ graph TD
 
 ---
 
-## 🚀 How to Run the Full Shield
+## Getting Started
 
-The AVIK framework provides a top-level orchestrator (`avik-shield.py`) to manage the golden staff. Ensure you are running on a Linux host with KVM enabled.
+### Prerequisites
 
-### 1. Verify Compliance
-Check your host system's compatibility with the hardware and software constraints:
+- Linux host with KVM enabled (`/dev/kvm` must exist)
+- Python 3.9+
+- `openssl` in `PATH` (for key generation)
+
+### First-Run Setup
+
+```bash
+git clone https://github.com/avik331/AVIK-Sandbox-Shield.git
+cd AVIK-Sandbox-Shield
+bash setup.sh
+```
+
+`setup.sh` does the following in one pass:
+1. Installs Python dependencies (`pyyaml`)
+2. Creates runtime directories (`/var/lib/avik-shield`, `/var/log/avik-shield`)
+3. Generates HMAC keys under `/etc/avik/keys/` (falls back to `~/.avik/keys/` if `/etc` is not writable)
+4. Marks all scripts executable
+
+### Verify Host Compatibility
+
 ```bash
 python3 avik-shield.py verify
 ```
 
-### 2. Ignite the Shield
-Start the layers in the correct defensive order (Audit -> Kill Switch -> Anomaly -> Guardians -> Enforcer -> KVM):
+### Start the Shield
+
 ```bash
 sudo python3 avik-shield.py start
 ```
 
-### 3. Monitor Status
-View the aggregated health and threat levels across all layers:
+### Monitor Status
+
 ```bash
 python3 avik-shield.py monitor
 ```
 
-### 4. Run the Full Test Suite
-Validate the cryptographic ledgers, prompt enforcers, and kill-chain logic using the included end-to-end test suite:
+### Emergency Kill
+
 ```bash
-cd tests
-./run-tests.sh
+sudo python3 avik-shield.py kill
+```
+
+### Run the Test Suite
+
+```bash
+bash tests/run-tests.sh
 ```
 
 ---
 
-## 📜 Compliance and Certification
+## Production Deployment
 
-Deploying AVIK Shield requires adhering strictly to the architecture. A system is only **"AVIK Shield Certified"** if all 8 layers are implemented exactly as specified, with Layer 1, Layer 2, and Layer 8 backed by true physical hardware configurations (not merely software simulations). 
+### System Requirements
+
+| Requirement | Minimum | Recommended |
+| :--- | :--- | :--- |
+| CPU | x86-64 with VT-x/AMD-V | Dedicated physical host |
+| RAM | 8 GB | 32 GB+ |
+| OS | Linux kernel 5.10+ | Ubuntu 22.04 LTS |
+| KVM | Required | Hardware-accelerated |
+| Network | Layer 1/2 air-gap enforced | Dedicated isolated segment |
+
+### Key Management
+
+Keys are generated automatically by `setup.sh` via `scripts/generate-keys.sh`.  
+Default locations:
+
+| Key | Primary Path | Fallback (dev) |
+| :--- | :--- | :--- |
+| Master HMAC | `/etc/avik/keys/master.key` | `~/.avik/keys/master.key` |
+| Kill-switch HMAC | `/etc/avik/keys/killswitch.key` | `~/.avik/keys/killswitch.key` |
+
+Paths are configured in `config.yaml` under the `keys:` block. To rotate keys, replace the key files and restart the affected layers.
+
+### Custom Config Path
+
+```bash
+sudo python3 avik-shield.py start --config /etc/avik/config.yaml
+```
+
+### Systemd Integration
+
+Create `/etc/systemd/system/avik-shield.service`:
+
+```ini
+[Unit]
+Description=AVIK Sandbox Shield
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/avik-shield/avik-shield.py start
+ExecStop=/usr/bin/python3 /opt/avik-shield/avik-shield.py shutdown
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+---
+
+## Configuration
+
+All settings are in `config.yaml` — no Python changes needed.
+
+| File | Purpose |
+| :--- | :--- |
+| `config.yaml` | Runtime settings for all 8 layers |
+| `config-schema.yaml` | Machine-readable schema for CI validation |
+| `config.py` | Python loader (singleton, injected into every layer) |
+
+### Key Settings
+
+**Tighten kill-switch sensitivity:**
+```yaml
+layers:
+  anomaly_detection:
+    thresholds:
+      critical_action_threshold: 0.5   # default: 1.0
+      threat_decay_per_second: 0.01    # default: 0.05
+```
+
+**Restrict prompt input:**
+```yaml
+layers:
+  prompt_enforcement:
+    max_input_length: 2048
+    ascii_only: true
+```
+
+**Adjust microVM resources:**
+```yaml
+layers:
+  kernel_isolation:
+    memory_mb: 4096
+    cpu_cores: 4
+```
+
+**Set log verbosity:**
+```yaml
+general:
+  log_level: DEBUG
+```
+
+---
+
+## Compliance
+
+A deployment is **AVIK Shield Certified** only when:
+
+1. All 8 layers are implemented as specified
+2. Layers 1, 2, and 8 are backed by physical hardware (not software simulation)
+3. Formal network, diode, and immutability proofs are documented
+
+See [docs/architecture.md](docs/architecture.md) for formal verification requirements.
 
 ---
 
 <div align="center">
   <br>
-  <b>Because in AI Safety, defense-in-depth is the only defense.</b><br><br>
-  <i>Built with ❤️ by <b>Avik Chakraborty</b></i><br>
-  <i>April 2026</i>
+  <i>Built by <b>Avik Chakraborty</b> — April 2026</i>
 </div>

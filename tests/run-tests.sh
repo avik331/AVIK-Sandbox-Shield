@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# AVIK Sandbox Shield - Golden Staff Test Runner
-# Description: Executes the end-to-end full stack verification test.
-# ==============================================================================
+# AVIK Sandbox Shield — test runner
+# Usage: bash tests/run-tests.sh [pytest options]
 
 set -euo pipefail
 
-echo "🛡️  AVIK Shield: Commencing Full Stack Golden Staff Verification 🛡️"
-echo "================================================================="
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Ensure we are in the correct directory
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
-
-# Check if python is available
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Error: Python 3 is required to run the test suite."
+if ! command -v python3 &>/dev/null; then
+    echo "error: python3 not found" >&2
     exit 1
 fi
 
-# Run the test suite
-python3 test_full_stack.py
+if ! python3 -c "import pytest" 2>/dev/null; then
+    echo "Installing pytest..."
+    pip3 install --quiet pytest pyyaml
+fi
 
-echo "================================================================="
-echo "✅ Golden Staff Verification Complete."
+echo
+echo "AVIK Sandbox Shield v1.1 — Test Suite"
+echo "--------------------------------------"
+echo
+
+cd "$REPO_ROOT"
+python3 -m pytest tests/test_full_stack.py -v "$@"

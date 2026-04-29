@@ -12,9 +12,16 @@ import json
 import time
 import hmac
 import hashlib
+import os
+import sys
+
+# Load centralized configuration
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import load_config, load_key
 
 def send_authenticated(sock, payload, addr):
-    secret_key = b"avik-shared-secret"
+    cfg = load_config(validate=False)
+    secret_key = load_key(cfg, "master")
     message = json.dumps(payload, sort_keys=True).encode('utf-8')
     signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
     payload["hmac"] = signature

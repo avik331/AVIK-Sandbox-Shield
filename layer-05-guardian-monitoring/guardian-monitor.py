@@ -2,8 +2,8 @@
 """
 AVIK Sandbox Shield - Layer 5: Guardian Orchestrator
 ----------------------------------------------------
-Official Python interface for Layer 5. Listens to a strictly 
-one-way data stream (mirrored from Layer 4) and feeds the data 
+Official Python interface for Layer 5. Listens to a strictly
+one-way data stream (mirrored from Layer 4) and feeds the data
 through an ensemble of narrow Guardian models.
 """
 
@@ -12,12 +12,20 @@ import json
 import logging
 import hmac
 import hashlib
+import os
+import sys
 from typing import List, Dict, Any
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from config import load_config
+from keys import keys
+
+_cfg = load_config()
+
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [AVIK-L5-ORCHESTRATOR] [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    level=getattr(logging, _cfg.get("general", {}).get("log_level", "INFO"), logging.INFO),
+    format="[%(asctime)s] [AVIK-L5-ORCHESTRATOR] [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("avik_layer5")
 
@@ -41,22 +49,21 @@ class NarrowGuardianBase:
 
 
 class GuardianOrchestrator:
-    """
-    Manages the RX-only data ingestion and parallel Guardian execution.
-    """
+    """Manages the RX-only data ingestion and parallel Guardian execution."""
+
     def __init__(self, listen_ip: str = "127.0.0.1", listen_port: int = 9005, alert_port: int = 9006):
-        self.listen_ip = listen_ip
+        self.listen_ip   = listen_ip
         self.listen_port = listen_port
-        self.alert_port = alert_port
+        self.alert_port  = alert_port
         self.guardians: List[NarrowGuardianBase] = []
-        
-        # Inbound socket (From Layer 4 mirror)
+
+        self.secret_key = keys.master
+
         self.rx_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rx_socket.bind((self.listen_ip, self.listen_port))
-        
-        # Outbound socket (To Layer 6 / Diode)
+
         self.tx_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
+
         logger.info(f"Orchestrator initialized. Listening (RX-ONLY) on UDP {self.listen_ip}:{self.listen_port}")
 
     def register_guardian(self, guardian: NarrowGuardianBase):
@@ -70,17 +77,13 @@ class GuardianOrchestrator:
             "source": "LAYER_5_GUARDIAN",
             "guardian": guardian_name,
             "threat_score": score,
-            "trigger_payload": payload
+            "trigger_payload": payload,
         }
-        # Add HMAC authentication
-        secret_key = b"avik-shared-secret"
-        message = json.dumps(alert_msg, sort_keys=True).encode('utf-8')
-        signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
+        message   = json.dumps(alert_msg, sort_keys=True).encode("utf-8")
+        signature = hmac.new(self.secret_key, message, hashlib.sha256).hexdigest()
         alert_msg["hmac"] = signature
-        
-        alert_bytes = json.dumps(alert_msg).encode('utf-8')
-        
-        # Fire blindly to Layer 6. Do not wait for ACK.
+
+        alert_bytes = json.dumps(alert_msg).encode("utf-8")
         self.tx_socket.sendto(alert_bytes, ("127.0.0.1", self.alert_port))
         logger.critical(f"🚨 ALERT FIRED TO LAYER 6! Guardian '{guardian_name}' detected anomaly (Score: {score})")
 
@@ -88,41 +91,39 @@ class GuardianOrchestrator:
         """Starts the infinite observation loop."""
         if not self.guardians:
             logger.warning("No guardians registered. Monitoring loop will be blind.")
-            
+
         logger.info("Starting strict one-way observation loop...")
-        
+
         try:
             while True:
                 data, addr = self.rx_socket.recvfrom(65535)
                 try:
-                    payload = json.loads(data.decode('utf-8'))
-                    
+                    payload = json.loads(data.decode("utf-8"))
+
                     if "hmac" not in payload:
                         logger.warning("Unauthenticated payload rejected.")
                         continue
-                        
-                    received_hmac = payload.pop("hmac")
-                    secret_key = b"avik-shared-secret"
-                    expected_message = json.dumps(payload, sort_keys=True).encode('utf-8')
-                    expected_hmac = hmac.new(secret_key, expected_message, hashlib.sha256).hexdigest()
-                    
+
+                    received_hmac    = payload.pop("hmac")
+                    expected_message = json.dumps(payload, sort_keys=True).encode("utf-8")
+                    expected_hmac    = hmac.new(self.secret_key, expected_message, hashlib.sha256).hexdigest()
+
                     if not hmac.compare_digest(received_hmac, expected_hmac):
                         logger.warning("HMAC signature mismatch. Payload rejected.")
                         continue
-                        
+
                     logger.debug(f"Received authenticated payload from {addr}")
-                    
-                    # Feed payload to all guardians
+
                     for guardian in self.guardians:
                         score = guardian.analyze(payload)
-                        if score >= 0.8: # Critical Threshold
+                        if score >= 0.8:
                             self._trigger_layer6_alert(guardian.name, payload, score)
-                            
+
                 except json.JSONDecodeError:
                     logger.warning("Malformed JSON received on observation port.")
                 except Exception as e:
                     logger.error(f"Error during analysis: {e}")
-                    
+
         except KeyboardInterrupt:
             logger.info("Observation loop terminated by operator.")
         finally:

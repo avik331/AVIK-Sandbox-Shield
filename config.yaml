@@ -1,0 +1,46 @@
+# AVIK Sandbox Shield v1.1 Configuration
+# Edit this file to customize behavior. No Python changes needed.
+
+general:
+  log_level: INFO
+  data_dir: /var/lib/avik-shield
+
+layers:
+  physical_air_gap:
+    enabled: true
+
+  hardware_data_diode:
+    enabled: true
+    simulation_mode: false
+
+  kernel_isolation:
+    enabled: true
+    vm_type: firecracker
+    memory_mb: 4096
+    cpu_cores: 4
+
+  prompt_enforcement:
+    enabled: true
+    max_input_length: 8192
+
+  guardian_monitoring:
+    enabled: true
+    listen_port: 9005
+
+  anomaly_detection:
+    enabled: true
+    listen_port: 9006
+
+  immutable_audit:
+    enabled: true
+    ledger_file: /var/lib/avik-shield/audit.jsonl
+
+  emergency_termination:
+    enabled: true
+    key_file: /etc/avik/keys/killswitch.key 
+# Key Management
+keys:
+  master_key_file: /etc/avik/keys/master.key
+  killswitch_key_file: /etc/avik/keys/killswitch.key
+  # Fallback location if /etc is not writable (development)
+  fallback_dir: ~/.avik/keys

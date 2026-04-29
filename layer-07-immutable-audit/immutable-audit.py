@@ -11,10 +11,25 @@ import socket
 import json
 import time
 import hashlib
+import hmac
 import os
+import sys
 import logging
-from typing import Dict, Any, List
-from merkle_tree import MerkleTree
+from typing import Dict, Any
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from keys import keys
+import importlib.util as _ilu
+import pathlib as _pl
+
+_spec = _ilu.spec_from_file_location(
+    "merkle_tree",
+    _pl.Path(__file__).parent / "merkle-tree.py",
+)
+_mod = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+MerkleTree = _mod.MerkleTree
+del _ilu, _pl, _spec, _mod
 
 logging.basicConfig(
     level=logging.INFO,
@@ -108,22 +123,31 @@ class ImmutableLedger:
 
 class AuditListener:
     def __init__(self, listen_ip: str = "0.0.0.0", listen_port: int = 514):
-        self.ledger = ImmutableLedger()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ledger     = ImmutableLedger()
+        self.secret_key = keys.master
+        self.sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((listen_ip, listen_port))
-        logger.info(f"Audit Daemon listening on UDP {listen_ip}:{listen_port}")
+        logger.info(f"Audit Daemon listening on UDP {listen_ip}:{listen_port} (HMAC auth required)")
+
+    def _verify(self, payload: dict, received_sig: str) -> bool:
+        body     = json.dumps(payload, sort_keys=True).encode("utf-8")
+        expected = hmac.new(self.secret_key, body, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, received_sig)
 
     def start(self):
-        logger.info("Ready to receive secure telemetry from Layer 2 Diode...")
+        logger.info("Ready to receive authenticated telemetry from Layer 2 Diode...")
         try:
             while True:
                 data, addr = self.sock.recvfrom(65535)
                 try:
-                    payload = json.loads(data.decode('utf-8'))
-                    self.ledger.append_log(payload)
+                    packet = json.loads(data.decode("utf-8"))
+                    sig    = packet.pop("hmac", None)
+                    if not sig or not self._verify(packet, sig):
+                        logger.warning("Unauthenticated audit packet from %s — dropped", addr)
+                        continue
+                    self.ledger.append_log(packet)
                 except json.JSONDecodeError:
-                    # Log raw string if not JSON
-                    self.ledger.append_log({"raw_data": data.decode('utf-8', errors='replace')})
+                    logger.warning("Non-JSON audit packet from %s — dropped", addr)
         except KeyboardInterrupt:
             logger.info("Audit Daemon shutting down.")
 

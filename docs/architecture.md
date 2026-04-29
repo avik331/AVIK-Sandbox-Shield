@@ -1,48 +1,111 @@
-# Architecture Specification: The 8-Layer Defense-in-Depth Model
+# Architecture — AVIK Sandbox Shield
 
-## Core Philosophy
+## Design Philosophy
 
-The AVIK Sandbox Shield is constructed on a fundamental premise: **Any single security boundary, regardless of its sophistication, has a non-zero probability of failure when subjected to the capabilities of a frontier AI system.** 
+Any single security boundary has a non-zero probability of failure against a capable adversarial model. AVIK Shield implements a deeply stratified architecture where each layer operates in a different physical or logical domain, making cross-layer exploits structurally infeasible rather than merely unlikely.
 
-Standard containment strategies (e.g., containerization, prompt engineering) represent a "flat" security model. A breach of the namespace implies a total system compromise. AVIK Shield implements a deeply stratified architecture where the layers are fundamentally asymmetric. An exploit capable of bypassing Layer 4 (application logic) is useless against Layer 2 (optical physics).
+A breach of Layer 4 (application logic) provides no leverage against Layer 2 (optical physics). A zero-day in the hypervisor does not affect Layer 8 (electromechanical power cutoff). The layers are asymmetric by design.
 
-## Layer Stratification & Domain Mechanics
+---
+
+## Layer Stratification
 
 | Layer | Domain | Attack Surface | Mitigation Mechanism |
 | :--- | :--- | :--- | :--- |
-| **L1: Air-Gap** | Physics / RF | Network Sockets, EM Emissions | Faraday Cages, Physical Disconnection |
-| **L2: Data Diode** | Optics / Hardware | Bi-directional TCP/C2 | TX-disabled fiber optic receivers |
-| **L3: Kernel Isolation** | OS / Hypervisor | VFS, eBPF, Namespaces | Hardware-accelerated microVMs (Firecracker) |
-| **L4: Prompt Enforcement**| Application / NLP | Prompt Injection, Serialization | Strict Schema, Stateless proxy validation |
-| **L5: Guardian Monitoring**| AI / Semantics | Deception, Steganography | Ensembles of narrow observer models |
-| **L6: Anomaly Detection** | Statistics / Systems| Syscall deviations, Resource | eBPF profiling, HIDS, PMCs |
-| **L7: Immutable Audit** | Cryptography | Log tampering, Forensics | Merkle trees, WORM storage, HSMs |
-| **L8: Kill Switch** | Electrical Eng. | Total software compromise | Out-of-band electromechanical power relays |
+| **L1: Air-Gap** | Physics / RF | Network sockets, EM emissions | Faraday cages, physical disconnection |
+| **L2: Data Diode** | Optics / Hardware | Bi-directional TCP, C2 channels | TX-disabled fiber optic receivers |
+| **L3: Kernel Isolation** | OS / Hypervisor | VFS, eBPF, namespaces | Hardware-accelerated microVMs (Firecracker/KVM) |
+| **L4: Prompt Enforcement** | Application / NLP | Prompt injection, serialization attacks | Strict schema, stateless proxy validation |
+| **L5: Guardian Monitoring** | AI / Semantics | Deceptive alignment, steganography | Ensembles of narrow observer models |
+| **L6: Anomaly Detection** | Statistics / Systems | Syscall deviations, resource abuse | eBPF profiling, HIDS, PMC counters |
+| **L7: Immutable Audit** | Cryptography | Log tampering, forensic destruction | Merkle trees, WORM storage, HSMs |
+| **L8: Kill Switch** | Electrical Engineering | Total software compromise | Out-of-band electromechanical power relays |
 
-## Strict Data Flow & The Isolation Boundary
+---
 
-The architecture defines a strict **Isolation Boundary** containing Layers 3, 4, and the Core LLM. 
+## Data Flow
 
-### Ingress (The Path In)
-1. The operator submits a prompt.
-2. The prompt crosses Layer 1 physically.
-3. It hits Layer 4 (Prompt Enforcement), running in a dedicated Layer 3 microVM.
-4. If it passes schema validation, it is forwarded over a virtual point-to-point link to the Core LLM microVM.
+### Ingress
 
-### Egress (The Path Out)
-1. The Core LLM generates an output.
-2. The output is intercepted by Layer 4 for redaction and validation.
-3. Simultaneously, a read-only mirror of the output is streamed to Layer 5 (Guardians).
-4. System metrics are gathered by Layer 6 (eBPF).
-5. Output, metrics, and Guardian verdicts are pushed through Layer 2 (Data Diode) to Layer 7 (Immutable Audit).
+1. Operator submits a prompt across the Layer 1 physical boundary.
+2. Layer 4 (Prompt Enforcer) receives the raw input and validates it against the schema and blocked-pattern ruleset.
+3. If validation passes, the structurally locked prompt is forwarded to the Core LLM running inside a Layer 3 Firecracker microVM.
+
+### Egress
+
+1. The Core LLM generates output inside the microVM.
+2. Layer 4 intercepts and redacts the output before it crosses the isolation boundary.
+3. A read-only UDP mirror of the output is streamed to Layer 5 (Guardians) for semantic analysis.
+4. Host telemetry (CPU, memory, syscall trace) is collected via eBPF and sent to Layer 6 (Anomaly Detector).
+5. Output, metrics, and Guardian verdicts are forwarded through Layer 2 (Data Diode, one-way) to Layer 7 (Immutable Audit Ledger).
 
 ### Control Plane
-- The Control Plane (Layer 6 and Layer 8) operates completely out-of-band. 
-- If Layer 6 detects a critical anomaly, it bypasses all software stacks and sends a hardware signal to Layer 8, cutting power.
+
+The control plane (L6 → L8) is fully out-of-band and does not share any software stack with the containment zone.
+
+- If Layer 6 scores the threat level at or above `critical_action_threshold`, it sends an HMAC-signed UDP kill command to Layer 8.
+- Layer 8 verifies the signature, then triggers an electromechanical relay or SysRq kernel panic — whichever is configured — cutting power to the host running the Core LLM.
+- This path cannot be blocked by software running inside the containment zone.
+
+---
+
+## Isolation Boundary
+
+```
+┌─────────────────────────────────────┐
+│           Containment Zone          │
+│                                     │
+│  ┌─────────────┐   ┌─────────────┐  │
+│  │  Layer 4    │◄──│  Core LLM   │  │
+│  │  (Enforcer) │──►│  (L3 VM)    │  │
+│  └─────────────┘   └─────────────┘  │
+└─────────────────────────────────────┘
+          │ read-only mirror (UDP)
+          ▼
+┌─────────────────────────────────────┐
+│       Out-of-Band Observation       │
+│   L5 Guardians ──► L6 Anomaly Eng. │
+└─────────────────────────────────────┘
+          │ HMAC-signed kill command
+          ▼
+┌─────────────────────────────────────┐
+│         Hardware Kill Plane         │
+│       L8 relay ──► power cut        │
+└─────────────────────────────────────┘
+```
+
+---
+
+## Cryptographic Guarantees
+
+### Inter-Layer Authentication (L5 → L6, L6 → L8)
+
+All inter-layer UDP messages are HMAC-SHA256 signed using keys loaded from the central key store (`/etc/avik/keys/`). An unsigned or incorrectly signed message is silently dropped. Keys are never hardcoded; they are generated by `scripts/generate-keys.sh` and loaded at runtime via `keys.py`.
+
+### Audit Integrity (L7)
+
+The audit ledger uses a Merkle tree structure. Each log entry is hashed as a leaf node; the root hash is computed over all leaves. Any modification to any historical entry produces a different root hash, which is detectable by `MerkleTree.verify_integrity()`.
+
+---
 
 ## Formal Verification Requirements
 
-For a deployment to achieve **AVIK Shield Certified** status, specific formal proofs must be provided:
-1. **Network Proof:** Proof of absence of logical routes from the Core LLM namespace to any routable IP space.
-2. **Diode Proof:** Hardware schematics proving the absence of a TX laser on the receiving end of Layer 2.
-3. **Immutability Proof:** Mathematical proof of the hash chain integrity mechanism in Layer 7.
+A deployment achieves **AVIK Shield Certified** status when the following proofs are documented:
+
+1. **Network Proof** — Demonstrates the absence of any logical route from the Core LLM network namespace to any routable IP space.
+2. **Diode Proof** — Hardware schematics proving the absence of a TX laser on the receiving end of Layer 2.
+3. **Immutability Proof** — Mathematical proof of hash chain integrity in Layer 7, including collision resistance analysis.
+
+---
+
+## Key Files
+
+| Path | Role |
+| :--- | :--- |
+| `avik-shield.py` | Top-level orchestrator CLI |
+| `config.py` | Centralized config loader (singleton) |
+| `keys.py` | Key loader (master + killswitch HMAC keys) |
+| `config.yaml` | Runtime settings for all layers |
+| `setup.sh` | First-run setup: dirs, keys, permissions |
+| `scripts/generate-keys.sh` | Cryptographic key generation |
+| `tests/test_full_stack.py` | Integration test suite (39 tests) |
