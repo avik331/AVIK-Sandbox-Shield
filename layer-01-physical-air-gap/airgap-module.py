@@ -25,9 +25,6 @@ class AirGapViolation(Exception):
     pass
 
 
-
-
-
 def check_network_interfaces() -> Dict[str, bool]:
     """
     Verifies that no routable network interfaces are active.

@@ -1,11 +1,11 @@
 <div align="center">
   <pre>
-    █████╗ ██╗   ██╗██╗██╗  ██╗    ███████╗██╗  ██╗██╗███████╗██████╗ 
-   ██╔══██╗██║   ██║██║██║ ██╔╝    ██╔════╝██║  ██║██║██╔════╝██╔══██╗
-   ███████║██║   ██║██║█████╔╝     ███████╗███████║██║█████╗  ██║  ██║
-   ██╔══██║╚██╗ ██╔╝██║██╔═██╗     ╚════██║██╔══██║██║██╔══╝  ██║  ██║
-   ██║  ██║ ╚████╔╝ ██║██║  ██╗    ███████║██║  ██║██║███████╗██████╔╝
-   ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ 
+    █████╗ ██╗   ██╗██╗██╗  ██╗    ███████╗██╗  ██╗██╗███████╗██╗     ██████╗ 
+   ██╔══██╗██║   ██║██║██║ ██╔╝    ██╔════╝██║  ██║██║██╔════╝██║     ██╔══██╗
+   ███████║██║   ██║██║█████╔╝     ███████╗███████║██║█████╗  ██║     ██║  ██║
+   ██╔══██║╚██╗ ██╔╝██║██╔═██╗     ╚════██║██╔══██║██║██╔══╝  ██║     ██║  ██║
+   ██║  ██║ ╚████╔╝ ██║██║  ██╗    ███████║██║  ██║██║███████╗███████╗██████╔╝
+   ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝ 
   </pre>
   <h3>The Advanced Verified Isolation Kernel</h3>
   <p><b>A production-grade, 8-layer defense-in-depth reference architecture for safely containing frontier-level AI models.</b></p>
@@ -24,9 +24,9 @@
 
 ## 📖 Overview
 
-**AVIK Sandbox Shield** is designed for organizations, defense teams, research labs, and enterprises that need to safely test unknown/rogue LLMs or use powerful LLMs as central orchestrators (the 'brain') for critical operations. 
+This framework is specifically designed for organizations, defense teams, intelligence agencies, research labs, and enterprises that need to safely test unknown or untrusted LLMs, or use powerful LLMs as the central orchestrator (the 'brain') for critical operations and data crunching.
 
-It is a mathematically grounded, hardware-backed framework engineered to provide the absolute strongest containment guarantees for advanced AI systems. Current industry sandbox solutions rely primarily on fragile software boundaries—such as container namespaces, syscall filtering, or naive prompt engineering. These perimeter defenses are hopelessly inadequate against an Artificial General Intelligence (AGI) or a highly deceptive model capable of generating novel zero-day exploits, discovering side-channel exfiltration routes, and performing complex psychological manipulation on human operators.
+**AVIK Sandbox Shield** is a mathematically grounded, hardware-backed framework engineered to provide the absolute strongest containment guarantees for advanced AI systems. Current industry sandbox solutions rely primarily on fragile software boundaries—such as container namespaces, syscall filtering, or naive prompt engineering. These perimeter defenses are hopelessly inadequate against an Artificial General Intelligence (AGI) or a highly deceptive model capable of generating novel zero-day exploits, discovering side-channel exfiltration routes, and performing complex psychological manipulation on human operators.
 
 AVIK Shield neutralizes these threats by introducing a **mandatory 8-layer defense-in-depth architecture**. This architecture spans physical reality, electronic hardware constraints, hypervisor-level virtualization, and semantic application logic. By enforcing draconian, fail-deadly isolation at every layer of the computing stack, we guarantee that a catastrophic breach at any single layer cannot physically or logically compromise the system's overall containment. 
 

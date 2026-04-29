@@ -12,7 +12,19 @@ import os
 import time
 
 # Ensure we can import from layer directories for testing
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, _project_root)
+sys.path.insert(0, os.path.join(_project_root, 'layer-04-prompt-enforcement'))
+sys.path.insert(0, os.path.join(_project_root, 'layer-07-immutable-audit'))
+
+# Rename hyphenated modules for import compatibility
+import importlib
+prompt_enforcer_mod = importlib.import_module("prompt-enforcer")
+PromptEnforcer = prompt_enforcer_mod.PromptEnforcer
+EnforcementViolation = prompt_enforcer_mod.EnforcementViolation
+
+merkle_tree_mod = importlib.import_module("merkle-tree")
+MerkleTree = merkle_tree_mod.MerkleTree
 
 class TestAvikGoldenStaff(unittest.TestCase):
 
@@ -26,7 +38,6 @@ class TestAvikGoldenStaff(unittest.TestCase):
     def test_layer_4_prompt_enforcement(self):
         """Tests the Prompt Enforcer logic."""
         print("\n[TEST] Verifying L4 Prompt Enforcement...")
-        from layer_04_prompt_enforcement.prompt_enforcer import PromptEnforcer, EnforcementViolation
         
         rules_path = os.path.join(os.path.dirname(__file__), '..', 'layer-04-prompt-enforcement', 'safety-rules.yaml')
         enforcer = PromptEnforcer(rules_path)
@@ -43,7 +54,6 @@ class TestAvikGoldenStaff(unittest.TestCase):
     def test_layer_7_audit_immutability(self):
         """Tests the Merkle Tree implementation."""
         print("\n[TEST] Verifying L7 Cryptographic Immutability...")
-        from layer_07_immutable_audit.merkle_tree import MerkleTree
         
         logs = ["Boot", "Prompt Passed", "Output Received"]
         tree = MerkleTree(logs)
