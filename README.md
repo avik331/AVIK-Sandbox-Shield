@@ -1,5 +1,12 @@
 <div align="center">
-  <h1>🛡️ AVIK Sandbox Shield</h1>
+  <pre>
+    █████╗ ██╗   ██╗██╗██╗  ██╗    ███████╗██╗  ██╗██╗███████╗██████╗ 
+   ██╔══██╗██║   ██║██║██║ ██╔╝    ██╔════╝██║  ██║██║██╔════╝██╔══██╗
+   ███████║██║   ██║██║█████╔╝     ███████╗███████║██║█████╗  ██║  ██║
+   ██╔══██║╚██╗ ██╔╝██║██╔═██╗     ╚════██║██╔══██║██║██╔══╝  ██║  ██║
+   ██║  ██║ ╚████╔╝ ██║██║  ██╗    ███████║██║  ██║██║███████╗██████╔╝
+   ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ 
+  </pre>
   <h3>The Advanced Verified Isolation Kernel</h3>
   <p><b>A production-grade, 8-layer defense-in-depth reference architecture for safely containing frontier-level AI models.</b></p>
 
@@ -17,15 +24,25 @@
 
 ## 📖 Overview
 
-**AVIK Sandbox Shield** is a mathematically grounded, hardware-backed framework engineered to provide the absolute strongest containment guarantees for advanced, frontier-level AI systems. Current sandbox solutions rely primarily on fragile software boundaries—such as container namespaces or prompt engineering. These perimeter defenses are hopelessly inadequate against an Artificial General Intelligence (AGI) capable of novel zero-day generation, steganographic exfiltration, and complex human social engineering.
+**AVIK Sandbox Shield** is a mathematically grounded, hardware-backed framework engineered to provide the absolute strongest containment guarantees for advanced, frontier-level AI systems. 
 
-AVIK Shield solves this by introducing a **mandatory 8-layer defense-in-depth architecture** that spans physical reality, hardware electronics, hypervisor virtualization, and application logic. By enforcing draconian isolation at every level of the computing stack, we guarantee that a catastrophic breach at any single layer physically or logically cannot compromise the system's overall containment. 
+Current industry sandbox solutions rely primarily on fragile software boundaries—such as container namespaces, syscall filtering, or naive prompt engineering. These perimeter defenses are hopelessly inadequate against an Artificial General Intelligence (AGI) or a highly deceptive model capable of generating novel zero-day exploits, discovering side-channel exfiltration routes, and performing complex psychological manipulation on human operators.
 
-## 🏆 The AVIK Golden Staff – 8 Layers Complete
+AVIK Shield neutralizes these threats by introducing a **mandatory 8-layer defense-in-depth architecture**. This architecture spans physical reality, electronic hardware constraints, hypervisor-level virtualization, and semantic application logic. By enforcing draconian, fail-deadly isolation at every layer of the computing stack, we guarantee that a catastrophic breach at any single layer physically or logically cannot compromise the system's overall containment. 
 
-The AVIK Shield acts as the "Golden Staff"—the complete, unbreakable foundation. Users simply bring their own "jewels" (their specific LLMs, narrow guardian classifiers, and hardware).
+---
 
-| Layer | Component | Defense Mechanism | Failure Mitigated |
+## 🎉 v1.0 "Golden Staff" Release
+
+The v1.0 release establishes the "Golden Staff"—the complete, unbreakable foundation of the AVIK Shield framework. It is ready for deployment in high-security environments, including defense contractors, national security laboratories, and frontier AI research facilities. Users are encouraged to adopt this staff and add their own "jewels" (domain-specific safety rules, custom Guardian models, and physical hardware).
+
+For detailed release notes, please see [RELEASE.md](RELEASE.md).
+
+---
+
+## 🏆 The 8 Layers of Containment
+
+| Layer | Component | Defense Mechanism | Primary Threats Mitigated |
 | :---: | :--- | :--- | :--- |
 | **8** | [Emergency Termination](layer-08-emergency-termination) | Hardware relay / SysRq Kill Switch | Complete sandbox breach; Zero-days |
 | **7** | [Immutable Audit](layer-07-immutable-audit) | Merkle Tree append-only ledger | Log tampering; Cover-up attempts |
@@ -50,7 +67,7 @@ graph TD
     end
 
     subgraph "AVIK Shield: Out-of-Band Observation"
-        L4 -.->|Mirrored UDP (RX-Only)| L5
+        L4 -.->|Mirrored UDP - RX Only| L5
         L5[Layer 5: Guardian Ensemble] -.->|Asynchronous Alert| L6
         HostTelemetry[Host OS Telemetry] -.->|eBPF Data| L6
         L6[Layer 6: Anomaly Detector] 
@@ -64,7 +81,7 @@ graph TD
     end
     
     subgraph "External Audit Server"
-        L2 -->|Photons (One-Way)| L7[(Layer 7: Immutable Ledger)]
+        L2 -->|Photons - One Way| L7[(Layer 7: Immutable Ledger)]
     end
 
     classDef critical fill:#ffcccc,stroke:#ff0000,stroke-width:2px;
@@ -75,7 +92,7 @@ graph TD
 
 ## 🚀 How to Run the Full Shield
 
-The AVIK framework provides a top-level orchestrator (`avik-shield.py`) to manage the golden staff.
+The AVIK framework provides a top-level orchestrator (`avik-shield.py`) to manage the golden staff. Ensure you are running on a Linux host with KVM enabled.
 
 ### 1. Verify Compliance
 Check your host system's compatibility with the hardware and software constraints:
@@ -96,7 +113,7 @@ python3 avik-shield.py monitor
 ```
 
 ### 4. Run the Full Test Suite
-Validate the cryptographic ledgers, prompt enforcers, and kill-chain logic:
+Validate the cryptographic ledgers, prompt enforcers, and kill-chain logic using the included end-to-end test suite:
 ```bash
 cd tests
 ./run-tests.sh
@@ -106,11 +123,13 @@ cd tests
 
 ## 📜 Compliance and Certification
 
-Deploying AVIK Shield requires adhering strictly to the architecture. A system is only **"AVIK Shield Certified"** if all 8 layers are implemented exactly as specified, with Layer 1, Layer 2, and Layer 8 backed by true physical hardware, not software simulations.
+Deploying AVIK Shield requires adhering strictly to the architecture. A system is only **"AVIK Shield Certified"** if all 8 layers are implemented exactly as specified, with Layer 1, Layer 2, and Layer 8 backed by true physical hardware configurations (not merely software simulations). 
 
 ---
 
 <div align="center">
+  <br>
   <b>Because in AI Safety, defense-in-depth is the only defense.</b><br><br>
-  Built with ❤️ by <b>Avik Chakraborty</b>
+  <i>Built with ❤️ by <b>Avik Chakraborty</b></i><br>
+  <i>April 2026</i>
 </div>
