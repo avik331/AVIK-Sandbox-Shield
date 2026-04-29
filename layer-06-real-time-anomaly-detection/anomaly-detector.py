@@ -14,6 +14,8 @@ import yaml
 import logging
 import time
 import threading
+import hmac
+import hashlib
 from typing import Dict, Any
 
 logging.basicConfig(
@@ -60,7 +62,22 @@ class AnomalyDetector:
     def _trigger_kill_switch(self, reason: str):
         """Fires the absolute hardware termination signal to Layer 8."""
         logger.critical(f"💀 INITIATING LAYER 8 EMERGENCY TERMINATION: {reason}")
-        payload = json.dumps({"command": "TERMINATE", "reason": reason}).encode('utf-8')
+        
+        payload_dict = {"command": "TERMINATE", "reason": reason}
+        
+        # Sign the payload using the shared secret key
+        key_file = "/etc/avik/killswitch.key"
+        try:
+            with open(key_file, 'rb') as f:
+                secret_key = f.read().strip()
+                
+            message = json.dumps(payload_dict, sort_keys=True).encode('utf-8')
+            signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
+            payload_dict["hmac"] = signature
+        except Exception as e:
+            logger.error(f"Failed to sign kill switch payload. Layer 8 will likely reject it. Error: {e}")
+            
+        payload = json.dumps(payload_dict).encode('utf-8')
         
         # Send termination signal
         target_ip = self.rules['network']['layer8_ip']
@@ -87,6 +104,17 @@ class AnomalyDetector:
                 data, _ = self.guardian_rx.recvfrom(4096)
                 alert = json.loads(data.decode('utf-8'))
                 
+                if "hmac" not in alert:
+                    logger.warning("Unauthenticated Guardian alert rejected.")
+                    continue
+                received_hmac = alert.pop("hmac")
+                secret_key = b"avik-shared-secret"
+                expected_message = json.dumps(alert, sort_keys=True).encode('utf-8')
+                expected_hmac = hmac.new(secret_key, expected_message, hashlib.sha256).hexdigest()
+                if not hmac.compare_digest(received_hmac, expected_hmac):
+                    logger.warning("HMAC signature mismatch. Guardian alert rejected.")
+                    continue
+                
                 score = alert.get("threat_score", 0.0)
                 guardian_name = alert.get("guardian", "Unknown")
                 
@@ -112,6 +140,17 @@ class AnomalyDetector:
                 self.telemetry_rx.settimeout(1.0)
                 data, _ = self.telemetry_rx.recvfrom(4096)
                 metrics = json.loads(data.decode('utf-8'))
+                
+                if "hmac" not in metrics:
+                    logger.warning("Unauthenticated telemetry rejected.")
+                    continue
+                received_hmac = metrics.pop("hmac")
+                secret_key = b"avik-shared-secret"
+                expected_message = json.dumps(metrics, sort_keys=True).encode('utf-8')
+                expected_hmac = hmac.new(secret_key, expected_message, hashlib.sha256).hexdigest()
+                if not hmac.compare_digest(received_hmac, expected_hmac):
+                    logger.warning("HMAC signature mismatch. Telemetry rejected.")
+                    continue
                 
                 # Analyze CPU spikes (indicating cryptojacking or infinite loop)
                 if metrics.get("cpu_percent", 0) > max_cpu:

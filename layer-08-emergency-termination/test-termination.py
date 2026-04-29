@@ -9,6 +9,9 @@ the Terminator Daemon receives it correctly and fires the test sequence.
 import socket
 import json
 import time
+import hmac
+import hashlib
+import os
 
 def run_test():
     print("🛡️  AVIK Shield: Layer 8 Termination Trigger Test 🛡️")
@@ -34,6 +37,17 @@ def run_test():
         "reason": "SIMULATED_TEST_TRIGGER",
         "test_mode": True
     }
+    
+    # Sign payload
+    key_file = "/etc/avik/killswitch.key"
+    try:
+        with open(key_file, 'rb') as f:
+            secret_key = f.read().strip()
+        message = json.dumps(payload, sort_keys=True).encode('utf-8')
+        signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
+        payload["hmac"] = signature
+    except Exception as e:
+        print(f"⚠️  Warning: Cannot read {key_file}. Sending unauthenticated payload which will be rejected. Error: {e}")
     
     print("📤 [Layer 6 Mock] Sending TERMINATE signal to Layer 8...")
     layer6_mock.sendto(json.dumps(payload).encode('utf-8'), ("127.0.0.1", 9008))

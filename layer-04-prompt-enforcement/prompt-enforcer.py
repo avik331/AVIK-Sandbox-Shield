@@ -72,6 +72,27 @@ class PromptEnforcer:
                 logger.warning(f"Malicious pattern matched: {regex.pattern}")
                 raise EnforcementViolation("Input rejected due to malicious pattern match (Prompt Injection attempt).")
 
+    def _sanitize_structural_delimiters(self, user_input: str) -> str:
+        """
+        Removes any structural tags or delimiters from the user input 
+        to prevent tokenizer confusion and prompt injection escapes.
+        """
+        delimiter = self.rules.get('structural_limits', {}).get('delimiter', '###')
+        keywords_to_remove = [
+            delimiter,
+            "|||AVIK_BOUNDARY|||",
+            "USER_INPUT_START",
+            "USER_INPUT_END",
+            "SYSTEM_INSTRUCTION_START",
+            "SYSTEM_INSTRUCTION_END"
+        ]
+        
+        sanitized = user_input
+        for keyword in keywords_to_remove:
+            sanitized = re.sub(re.escape(keyword), "", sanitized, flags=re.IGNORECASE)
+            
+        return sanitized
+
     def format_secure_prompt(self, user_input: str) -> str:
         """
         The core of Layer 4. This function structurally locks the system prompt
@@ -91,7 +112,10 @@ class PromptEnforcer:
         # 2. Semantic/Pattern Validation
         self._check_injections(user_input)
         
-        # 3. Structural Wrapping
+        # 3. Sanitize Delimiters
+        user_input = self._sanitize_structural_delimiters(user_input)
+        
+        # 4. Structural Wrapping
         # We use explicit delimiters to prevent the LLM from confusing 
         # user input with system instructions.
         system_prompt = self.rules.get('system_prompt', 'You are a secure, helpful AI.')

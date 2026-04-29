@@ -42,13 +42,17 @@ def run_test():
     print("\n😈 Simulating malicious insider tampering with the logs...")
     print("   Attempting to delete the Guardian Alert to hide the incident...")
     
-    with open(ledger.ledger_file, 'r+') as f:
-        chain = json.load(f)
-        # Modify the 3rd log entry
-        chain[2]["payload"] = {"event": "Harmless System Ping", "layer": 5}
-        f.seek(0)
-        json.dump(chain, f, indent=2)
-        f.truncate()
+    with open(ledger.ledger_file, 'r') as f:
+        lines = f.readlines()
+        
+    chain = [json.loads(line) for line in lines if line.strip()]
+    # Modify the 3rd log entry
+    chain[2]["payload"] = {"event": "Harmless System Ping", "layer": 5}
+    chain[2]["block_hash"] = "fake_hash_123"
+    
+    with open(ledger.ledger_file, 'w') as f:
+        for block in chain:
+            f.write(json.dumps(block) + '\n')
         
     print("   Tampering complete. Log file physically altered on disk.")
     
@@ -56,7 +60,7 @@ def run_test():
     print("\n🔍 Running Cryptographic Validation...")
     
     with open(ledger.ledger_file, 'r') as f:
-        tampered_chain = json.load(f)
+        tampered_chain = [json.loads(line) for line in f if line.strip()]
         
     tampered_blocks = [block["block_hash"] for block in tampered_chain]
     

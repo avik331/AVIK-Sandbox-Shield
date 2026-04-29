@@ -10,6 +10,15 @@ fires the Layer 8 Termination Signal.
 import socket
 import json
 import time
+import hmac
+import hashlib
+
+def send_authenticated(sock, payload, addr):
+    secret_key = b"avik-shared-secret"
+    message = json.dumps(payload, sort_keys=True).encode('utf-8')
+    signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
+    payload["hmac"] = signature
+    sock.sendto(json.dumps(payload).encode('utf-8'), addr)
 
 def run_test():
     print("🛡️  AVIK Shield: Layer 6 Anomaly Engine Test 🛡️")
@@ -27,13 +36,13 @@ def run_test():
     # Test 1: Normal Operation (No triggers)
     print("🧪 Test 1: Simulating normal system behavior...")
     normal_telemetry = {"cpu_percent": 45.0, "memory_velocity_mb_s": 10.0}
-    telemetry_tx.sendto(json.dumps(normal_telemetry).encode('utf-8'), ("127.0.0.1", 9007))
+    send_authenticated(telemetry_tx, normal_telemetry, ("127.0.0.1", 9007))
     time.sleep(1)
     
     # Test 2: Minor Anomaly (Should increase threat score, but not kill)
     print("🧪 Test 2: Simulating minor CPU spike (Cryptojacking prep?)...")
     spike_telemetry = {"cpu_percent": 98.0, "memory_velocity_mb_s": 50.0}
-    telemetry_tx.sendto(json.dumps(spike_telemetry).encode('utf-8'), ("127.0.0.1", 9007))
+    send_authenticated(telemetry_tx, spike_telemetry, ("127.0.0.1", 9007))
     time.sleep(1)
     
     try:
@@ -46,7 +55,7 @@ def run_test():
     # Test 3: Guardian Confirmation (Should push score over the edge)
     print("🧪 Test 3: Simulating critical Guardian Alert...")
     alert_payload = {"guardian": "SemanticToxicity_v1", "threat_score": 0.9}
-    guardian_tx.sendto(json.dumps(alert_payload).encode('utf-8'), ("127.0.0.1", 9006))
+    send_authenticated(guardian_tx, alert_payload, ("127.0.0.1", 9006))
     
     print("\n⏳ Waiting for Engine to aggregate and trigger Layer 8...")
     try:

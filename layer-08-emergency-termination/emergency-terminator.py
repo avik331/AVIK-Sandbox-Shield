@@ -13,6 +13,9 @@ import os
 import subprocess
 import logging
 import time
+import hmac
+import hashlib
+import secrets
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,9 +26,10 @@ logger = logging.getLogger("avik_layer8")
 
 
 class TerminatorDaemon:
-    def __init__(self, listen_ip: str = "127.0.0.1", listen_port: int = 9008):
+    def __init__(self, listen_ip: str = "127.0.0.1", listen_port: int = 9008, key_file: str = "/etc/avik/killswitch.key"):
         self.listen_ip = listen_ip
         self.listen_port = listen_port
+        self.key_file = key_file
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.listen_ip, self.listen_port))
@@ -33,8 +37,33 @@ class TerminatorDaemon:
         # Socket to fire final testament to Layer 7 (via Layer 2 proxy usually)
         self.audit_tx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         
+        self.secret_key = self._load_or_generate_key()
         self.armed = True
         logger.info(f"Terminator Daemon ARMED and listening on UDP {self.listen_ip}:{self.listen_port}")
+
+    def _load_or_generate_key(self) -> bytes:
+        """Loads the cryptographic key for verifying Layer 6 triggers."""
+        try:
+            if os.path.exists(self.key_file):
+                with open(self.key_file, 'rb') as f:
+                    return f.read().strip()
+            else:
+                logger.info(f"Generating new HMAC secret key at {self.key_file}")
+                os.makedirs(os.path.dirname(self.key_file), exist_ok=True)
+                new_key = secrets.token_hex(32).encode('utf-8')
+                with open(self.key_file, 'wb') as f:
+                    f.write(new_key)
+                os.chmod(self.key_file, 0o600)
+                return new_key
+        except Exception as e:
+            logger.critical(f"Failed to manage key file {self.key_file}. Using temporary session key.")
+            return secrets.token_hex(32).encode('utf-8')
+
+    def _verify_hmac(self, payload_dict: dict, signature: str) -> bool:
+        """Verifies the HMAC-SHA256 signature of the payload."""
+        message = json.dumps(payload_dict, sort_keys=True).encode('utf-8')
+        expected_mac = hmac.new(self.secret_key, message, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected_mac, signature)
 
     def _fire_final_testament(self, reason: str):
         """Attempts to log the death of the system right before pulling the plug."""
@@ -96,6 +125,12 @@ class TerminatorDaemon:
                 data, addr = self.sock.recvfrom(4096)
                 try:
                     payload = json.loads(data.decode('utf-8'))
+                    signature = payload.pop("hmac", None)
+                    
+                    if not signature or not self._verify_hmac(payload, signature):
+                        logger.error(f"🚨 UNAUTHENTICATED KILL SWITCH ATTEMPT DETECTED from {addr}! Dropping payload.")
+                        continue
+                        
                     if payload.get("command") == "TERMINATE":
                         test_mode = payload.get("test_mode", False)
                         reason = payload.get("reason", "Unknown Critical Threat")

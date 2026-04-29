@@ -7,7 +7,6 @@ Provides strict validation of network isolation and secure staging for unidirect
 """
 
 import os
-import subprocess
 import socket
 import logging
 from pathlib import Path
@@ -26,16 +25,7 @@ class AirGapViolation(Exception):
     pass
 
 
-def _run_command(cmd: List[str]) -> str:
-    """Execute a shell command securely and return its stdout."""
-    try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        logger.debug(f"Command {' '.join(cmd)} failed (this is often expected in an air-gap). Error: {e.stderr}")
-        return ""
-    except FileNotFoundError:
-        return ""
+
 
 
 def check_network_interfaces() -> Dict[str, bool]:
@@ -43,18 +33,29 @@ def check_network_interfaces() -> Dict[str, bool]:
     Verifies that no routable network interfaces are active.
     Only the loopback ('lo') and authorized diode interfaces are permitted.
     """
-    interfaces = socket.if_nameindex()
     status = {"compliant": True, "violations": []}
-    
     authorized_interfaces = {"lo", "diode0"}
     
-    for idx, name in interfaces:
+    sys_net = Path("/sys/class/net")
+    if not sys_net.exists():
+        logger.warning("/sys/class/net not found, unable to verify network interfaces.")
+        return status
+        
+    for net_dir in sys_net.iterdir():
+        if not net_dir.is_dir():
+            continue
+        name = net_dir.name
         if name not in authorized_interfaces:
             # Check if interface is UP
-            ip_output = _run_command(["ip", "link", "show", name])
-            if "state UP" in ip_output:
-                status["compliant"] = False
-                status["violations"].append(f"Unauthorized interface is UP: {name}")
+            operstate_file = net_dir / "operstate"
+            if operstate_file.exists():
+                try:
+                    with open(operstate_file, "r") as f:
+                        if f.read().strip() == "up":
+                            status["compliant"] = False
+                            status["violations"].append(f"Unauthorized interface is UP: {name}")
+                except Exception as e:
+                    logger.error(f"Failed to read operstate for {name}: {e}")
                 
     return status
 
@@ -65,16 +66,40 @@ def check_wireless_status() -> Dict[str, bool]:
     """
     status = {"compliant": True, "violations": []}
     
-    rfkill_out = _run_command(["rfkill", "list"])
-    if not rfkill_out:
-        # If rfkill isn't present, assume strict minimal install, but log it
-        logger.warning("rfkill command not found; cannot definitively verify wireless hardware state via software.")
+    sys_rfkill = Path("/sys/class/rfkill")
+    if not sys_rfkill.exists():
+        logger.warning("/sys/class/rfkill not found; cannot definitively verify wireless hardware state.")
         return status
 
-    # If any interface is not soft/hard blocked, it's a violation
-    if "Soft blocked: no" in rfkill_out or "Hard blocked: no" in rfkill_out:
-        status["compliant"] = False
-        status["violations"].append("Wireless interfaces are not completely blocked by rfkill.")
+    for rfkill_dir in sys_rfkill.iterdir():
+        if rfkill_dir.is_dir() and rfkill_dir.name.startswith("rfkill"):
+            soft_file = rfkill_dir / "soft"
+            hard_file = rfkill_dir / "hard"
+            
+            soft_blocked = False
+            hard_blocked = False
+            
+            if soft_file.exists():
+                try:
+                    with open(soft_file, "r") as f:
+                        if f.read().strip() == "1":
+                            soft_blocked = True
+                except Exception:
+                    pass
+                    
+            if hard_file.exists():
+                try:
+                    with open(hard_file, "r") as f:
+                        if f.read().strip() == "1":
+                            hard_blocked = True
+                except Exception:
+                    pass
+                    
+            # If any interface is not soft/hard blocked, it's a violation
+            if not soft_blocked or not hard_blocked:
+                status["compliant"] = False
+                status["violations"].append(f"Wireless interface {rfkill_dir.name} is not completely blocked.")
+                break
         
     return status
 

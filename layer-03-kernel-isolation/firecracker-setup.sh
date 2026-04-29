@@ -33,6 +33,25 @@ echo "[+] Downloading Firecracker ${FC_VERSION}..."
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 wget -q "$FC_RELEASE_URL" -O firecracker.tgz
+
+echo "[+] Verifying SHA256 checksum..."
+# Hardcoded, known-good SHA256 checksums for Firecracker v1.7.0 releases
+if [ "$ARCH" = "x86_64" ]; then
+    EXPECTED_SHA256="0f930e1df5c49b0fb9bfdf5ce3015bc2c30ec719c8f000d6ba4b51ca386db8a1"
+elif [ "$ARCH" = "aarch64" ]; then
+    EXPECTED_SHA256="ab417be1f09c73efb1c3132e08678d2b2cdfb7f56641ab4c0a52df0cce2ff769"
+else
+    echo "❌ Error: Unsupported architecture for checksum verification."
+    exit 1
+fi
+
+echo "$EXPECTED_SHA256  firecracker.tgz" > checksum.txt
+if ! sha256sum -c checksum.txt; then
+    echo "❌ CRITICAL: Checksum verification failed! Possible supply chain attack."
+    exit 1
+fi
+echo "✅ Checksum verified."
+
 tar -xzf firecracker.tgz
 
 echo "[+] Installing binaries to /usr/local/bin..."

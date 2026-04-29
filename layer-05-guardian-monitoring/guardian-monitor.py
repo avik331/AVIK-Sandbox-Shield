@@ -10,6 +10,8 @@ through an ensemble of narrow Guardian models.
 import socket
 import json
 import logging
+import hmac
+import hashlib
 from typing import List, Dict, Any
 
 logging.basicConfig(
@@ -70,6 +72,12 @@ class GuardianOrchestrator:
             "threat_score": score,
             "trigger_payload": payload
         }
+        # Add HMAC authentication
+        secret_key = b"avik-shared-secret"
+        message = json.dumps(alert_msg, sort_keys=True).encode('utf-8')
+        signature = hmac.new(secret_key, message, hashlib.sha256).hexdigest()
+        alert_msg["hmac"] = signature
+        
         alert_bytes = json.dumps(alert_msg).encode('utf-8')
         
         # Fire blindly to Layer 6. Do not wait for ACK.
@@ -88,7 +96,21 @@ class GuardianOrchestrator:
                 data, addr = self.rx_socket.recvfrom(65535)
                 try:
                     payload = json.loads(data.decode('utf-8'))
-                    logger.debug(f"Received payload from {addr}")
+                    
+                    if "hmac" not in payload:
+                        logger.warning("Unauthenticated payload rejected.")
+                        continue
+                        
+                    received_hmac = payload.pop("hmac")
+                    secret_key = b"avik-shared-secret"
+                    expected_message = json.dumps(payload, sort_keys=True).encode('utf-8')
+                    expected_hmac = hmac.new(secret_key, expected_message, hashlib.sha256).hexdigest()
+                    
+                    if not hmac.compare_digest(received_hmac, expected_hmac):
+                        logger.warning("HMAC signature mismatch. Payload rejected.")
+                        continue
+                        
+                    logger.debug(f"Received authenticated payload from {addr}")
                     
                     # Feed payload to all guardians
                     for guardian in self.guardians:

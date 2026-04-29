@@ -39,14 +39,18 @@ class ImmutableLedger:
             
         if not os.path.exists(self.ledger_file):
             with open(self.ledger_file, 'w') as f:
-                json.dump([], f)
+                pass
 
     def _load_state(self):
         try:
             with open(self.ledger_file, 'r') as f:
-                chain = json.load(f)
-                if chain:
-                    self.last_block_hash = chain[-1]["block_hash"]
+                last_line = None
+                for line in f:
+                    if line.strip():
+                        last_line = line
+                if last_line:
+                    last_block = json.loads(last_line)
+                    self.last_block_hash = last_block["block_hash"]
         except Exception:
             pass # Start fresh if empty
 
@@ -70,12 +74,8 @@ class ImmutableLedger:
         }
         
         # Write to ledger
-        with open(self.ledger_file, 'r+') as f:
-            chain = json.load(f)
-            chain.append(entry)
-            f.seek(0)
-            json.dump(chain, f, indent=2)
-            f.truncate()
+        with open(self.ledger_file, 'a') as f:
+            f.write(json.dumps(entry) + '\n')
             
         self.last_block_hash = block_hash
         logger.info(f"Block Mined & Appended | Hash: {block_hash[:16]}...")
@@ -85,13 +85,18 @@ class ImmutableLedger:
 
     def update_merkle_root(self):
         """Calculates the Merkle Root of all block hashes to prove global integrity."""
-        with open(self.ledger_file, 'r') as f:
-            chain = json.load(f)
+        block_hashes = []
+        try:
+            with open(self.ledger_file, 'r') as f:
+                for line in f:
+                    if line.strip():
+                        block_hashes.append(json.loads(line)["block_hash"])
+        except Exception:
+            pass
             
-        if not chain:
+        if not block_hashes:
             return
             
-        block_hashes = [block["block_hash"] for block in chain]
         tree = MerkleTree(block_hashes)
         root_hash = tree.get_root_hash()
         
